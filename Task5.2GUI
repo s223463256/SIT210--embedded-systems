@@ -1,0 +1,39 @@
+from tkinter import *
+import tkinter.font
+from gpiozero import PWMLED
+
+# Defining PWMLEDs to Raspberry Pi pins (pulse Width Moduation)
+led_red = PWMLED(14)
+led_green = PWMLED(15)
+led_blue = PWMLED(18)
+
+# Creating GUI for LED intensity control
+win = Tk()
+win.title("LED Intensity Control")
+myFont = tkinter.font.Font(family='Helvetica', size=16, weight="bold")
+#window size for GUI
+win.geometry("400x300")
+#update LED intensity when slider value changes as float value
+def update_intensity_red(value):
+    led_red.value = float(value)
+
+def update_intensity_green(value):
+    led_green.value = float(value)
+
+def update_intensity_blue(value):
+    led_blue.value = float(value)
+
+# Slider widgets for controlling LED intensity
+red_slider = Scale(win, from_=0, to=1, resolution=0.01, orient=HORIZONTAL, label="Red LED Intensity",font=myFont, command=update_intensity_red, length=300)
+red_slider.set(0)# Initialize slider value as 0
+red_slider.pack()
+
+green_slider = Scale(win, from_=0, to=1, resolution=0.01, orient=HORIZONTAL, label="Green LED Intensity", font=myFont, command=update_intensity_green, length=300)
+green_slider.set(0)
+green_slider.pack()
+
+blue_slider = Scale(win, from_=0, to=1, resolution=0.01, orient=HORIZONTAL, label="Blue LED Intensity", font=myFont, command=update_intensity_blue, length=300)
+blue_slider.set(0)
+blue_slider.pack()
+# Loop
+win.mainloop()
