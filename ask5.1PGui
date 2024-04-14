@@ -1,0 +1,60 @@
+from tkinter import *
+import tkinter.font
+from gpiozero import LED
+# Defining LEDs to Raspberry Pi pins
+led_red = LED(14)
+led_green = LED(15)
+led_blue = LED(18)
+# Creating GUI for LED toggling
+win = Tk()
+win.title("LED Toggler")
+myFont = tkinter.font.Font(family='Helvetica', size=12, weight="bold")
+# Defining functions for all 3 LEDs
+def ledToggle_red():
+    if led_green.is_lit:
+        led_green.off()
+        GreenButton["text"] = "Turn Green LED on"
+    if led_blue.is_lit:
+        led_blue.off()
+        BlueButton["text"] = "Turn Blue LED on"
+    if led_red.is_lit:
+        led_red.off()
+        RedButton["text"] = "Turn Red LED on"
+    else:
+        led_red.on()
+        RedButton["text"] = "Turn Red LED off"
+def ledToggle_green():
+    if led_red.is_lit:
+        led_red.off()
+        RedButton["text"] = "Turn Red LED on"
+    if led_blue.is_lit:
+        led_blue.off()
+        BlueButton["text"] = "Turn Blue LED on"
+    if led_green.is_lit:
+        led_green.off()
+        GreenButton["text"] = "Turn Green LED on"
+    else:
+        led_green.on()
+        GreenButton["text"] = "Turn Green LED off"
+def ledToggle_blue():
+    if led_red.is_lit:
+        led_red.off()
+        RedButton["text"] = "Turn Red LED on"
+    if led_green.is_lit:
+        led_green.off()
+        GreenButton["text"] = "Turn Green LED on"
+    if led_blue.is_lit:
+        led_blue.off()
+        BlueButton["text"] = "Turn Blue LED on"
+    else:
+        led_blue.on()
+        BlueButton["text"] = "Turn Blue LED off"
+# GUI for to toggle each of the LEDs
+RedButton = Button(win, text='Turn Red LED On', font=myFont, command=ledToggle_red, bg='red', height=1, width=24)
+RedButton.grid(row=0, column=0)
+GreenButton = Button(win, text='Turn Green LED On', font=myFont, command=ledToggle_green, bg='green', height=1, width=24)
+GreenButton.grid(row=1, column=0)
+BlueButton = Button(win, text='Turn Blue LED On', font=myFont, command=ledToggle_blue, bg='blue', height=1, width=24)
+BlueButton.grid(row=2, column=0)
+# Loop
+win.mainloop()
