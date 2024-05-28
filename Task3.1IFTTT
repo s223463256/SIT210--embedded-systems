@@ -3,16 +3,15 @@
 #include <BH1750.h>
 #include <Wire.h>
 BH1750 lightMeter;
-//please enter your sensitive data in the Secret tab
+//sensitive data for wifi password and usernam
 char ssid[] = SECRET_SSID;
 char pass[] = SECRET_PASSWORD;
 
 WiFiClient client;
-
+//IFTTT information
 char   HOST_NAME[] = "maker.ifttt.com";
 String PATH_NAME   = "/trigger/sketch_received/with/key/fPKn9QR5lsUafaoWyGJdakvLqygu-QyYUH8QnjCJz1b"; // change your EVENT-NAME and YOUR-KEY
 String queryString = "?value1=57&value2=25";
-//initializing wifi connection
 void setup() {
   // initialize WiFi connection
   WiFi.begin(ssid, pass);
@@ -47,7 +46,7 @@ void loop() {
   if (lux <= 10 && counter == 1) {
     Serial.println("Low Light Level ");
     client.println();
-    client.println("GET " + PATH_NAME + queryString + " HTTP/1.1");
+    client.println("GET " + PATH_NAME + queryString + " HTTP/1.1"); //send request
     client.println("Host: " + String(HOST_NAME));
     Serial.println("Insufficent sunlight email sent");
     client.println();
@@ -57,7 +56,7 @@ void loop() {
   } else if (lux > 10 && counter == 2) {
     Serial.println("High Light Level ");
     client.println();
-    client.println("GET " + PATH_NAME + queryString + " HTTP/1.1");
+    client.println("GET " + PATH_NAME + queryString + " HTTP/1.1"); //send request
     client.println("Host: " + String(HOST_NAME));
     Serial.println("Sufficent sunlight email sent");
     client.println();
