@@ -65,6 +65,7 @@ Delay (ms): <input type="number" id="delay" min="0" step="1" value="1000">
 #sending request to arduino where it opens the url that sends the data to the arduino
 def send_request_to_arduino(command, intensity=None, delay=None, data=None):
     try:
+        #creating url based on gui inputs
         url = f"http://{arduino_ip}:{arduino_port}/led_control?"
         if intensity is not None:
             url += f"intensity={intensity}"
@@ -74,30 +75,36 @@ def send_request_to_arduino(command, intensity=None, delay=None, data=None):
             url += f"data={data}"
         else:
             url += f"command={command}"
-
+        #send GET request to arduino
         response = requests.get(url)
         return response.status_code, response.content
     except requests.ConnectionError:
+        #handling connection errors and returning status
         return 500, b"Failed to connect to Arduino Nano"
 # handling HTTP requests
 class MyServer(BaseHTTPRequestHandler):
     def do_GET(self):
         if self.path.startswith("/led_control"):
+            #parse query from URL
             params = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
             if "command" in params:
+                #get command parameter and send to arduino
                 command = params["command"][0]
                 status_code, content = send_request_to_arduino(command)
             elif "intensity" in params:
+                #get intensity parameter and send to arduino
                 intensity = params["intensity"][0]
                 status_code, content = send_request_to_arduino(None, intensity)
             elif "delay" in params:
+                #get delay parameter and send to arduino
                 delay = params["delay"][0]
                 status_code, content = send_request_to_arduino(None, None, delay)
             elif "data" in params and params["data"][0] == "light_data":
+                #if data parameter sends light_data to arduino
                 status_code, content = send_request_to_arduino(None, None, None, "light_data")
             else:
                 status_code, content = 400, b"Bad Request"
-
+            #send response with status code and content headers
             self.send_response(status_code)
             self.send_header('Content-type', 'text/plain')
             self.end_headers()
@@ -109,9 +116,12 @@ class MyServer(BaseHTTPRequestHandler):
             self.wfile.write(html_form.encode())
 
 if __name__ == "__main__":
+    #creating HTTP server with hostname and port
     web_server = HTTPServer((host_name, host_port), MyServer)
+    #print server into terminal
     print(f"Server started at http://{host_name}:{host_port}")
     try:
+        #starting server
         web_server.serve_forever()
     except KeyboardInterrupt:
         pass
