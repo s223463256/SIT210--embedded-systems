@@ -1,0 +1,119 @@
+from http.server import BaseHTTPRequestHandler, HTTPServer
+import urllib.parse
+import requests
+
+host_name = "192.168.69.230"  # IP of Raspberry Pi
+host_port = 80
+arduino_ip = "192.168.69.58"  # IP of Arduino
+arduino_port = 80
+# display for HTTP gui
+html_form = """
+<!DOCTYPE html>
+<html>
+<head>
+<title>LED Control</title>
+<script>
+function setIntensity() {
+    var intensity = document.getElementById("intensity").value;
+    var xhttp = new XMLHttpRequest();
+    xhttp.open("GET", "/led_control?intensity=" + intensity, true);
+    xhttp.send();
+}
+
+function turnOn() {
+    var xhttp = new XMLHttpRequest();
+    xhttp.open("GET", "/led_control?command=on", true);
+    xhttp.send();
+}
+
+function turnOff() {
+    var xhttp = new XMLHttpRequest();
+    var xhttp = new XMLHttpRequest();
+    xhttp.open("GET", "/led_control?command=off", true);
+    xhttp.send();
+}
+
+function setDelay() {
+    var delayTime = document.getElementById("delay").value;
+    var xhttp = new XMLHttpRequest();
+    xhttp.open("GET", "/led_control?delay=" + delayTime, true);
+    xhttp.send();
+}
+
+function sendLightData() {
+    var xhttp = new XMLHttpRequest();
+    xhttp.open("GET", "/led_control?data=light_data", true);
+    xhttp.send();
+}
+</script>
+</head>
+<body>
+<h2>LED Control</h2>
+<button onclick="turnOn()">Turn On</button>
+<button onclick="turnOff()">Turn Off</button>
+<br>
+Intensity: <input type="number" id="intensity" min="0" max="255" step="1" value="0">
+<button onclick="setIntensity()">Turn on and Set Intensity with delay</button>
+<br>
+Delay (ms): <input type="number" id="delay" min="0" step="1" value="1000">
+<button onclick="setDelay()">Set Delay</button>
+<br>
+<button onclick="sendLightData()">Send Light Data</button>
+</body>
+</html>
+"""
+#sending request to arduino where it opens the url that sends the data to the arduino
+def send_request_to_arduino(command, intensity=None, delay=None, data=None):
+    try:
+        url = f"http://{arduino_ip}:{arduino_port}/led_control?"
+        if intensity is not None:
+            url += f"intensity={intensity}"
+        elif delay is not None:
+            url += f"delay={delay}"
+        elif data is not None:
+            url += f"data={data}"
+        else:
+            url += f"command={command}"
+
+        response = requests.get(url)
+        return response.status_code, response.content
+    except requests.ConnectionError:
+        return 500, b"Failed to connect to Arduino Nano"
+# handling HTTP requests
+class MyServer(BaseHTTPRequestHandler):
+    def do_GET(self):
+        if self.path.startswith("/led_control"):
+            params = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+            if "command" in params:
+                command = params["command"][0]
+                status_code, content = send_request_to_arduino(command)
+            elif "intensity" in params:
+                intensity = params["intensity"][0]
+                status_code, content = send_request_to_arduino(None, intensity)
+            elif "delay" in params:
+                delay = params["delay"][0]
+                status_code, content = send_request_to_arduino(None, None, delay)
+            elif "data" in params and params["data"][0] == "light_data":
+                status_code, content = send_request_to_arduino(None, None, None, "light_data")
+            else:
+                status_code, content = 400, b"Bad Request"
+
+            self.send_response(status_code)
+            self.send_header('Content-type', 'text/plain')
+            self.end_headers()
+            self.wfile.write(content)
+        else:
+            self.send_response(200)
+            self.send_header('Content-type', 'text/html')
+            self.end_headers()
+            self.wfile.write(html_form.encode())
+
+if __name__ == "__main__":
+    web_server = HTTPServer((host_name, host_port), MyServer)
+    print(f"Server started at http://{host_name}:{host_port}")
+    try:
+        web_server.serve_forever()
+    except KeyboardInterrupt:
+        pass
+    web_server.server_close()
+    print("Server stopped")
