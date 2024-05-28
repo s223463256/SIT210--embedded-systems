@@ -2,11 +2,11 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 import urllib.parse
 import requests
 
-host_name = "192.168.69.230"  # IP of Raspberry Pi
+host_name = "192.168.69.230"  #IP of Raspberry Pi
 host_port = 80
-arduino_ip = "192.168.69.58"  # IP of Arduino
+arduino_ip = "192.168.69.58"  #IP of Arduino
 arduino_port = 80
-# display for HTTP gui
+#display for HTTP gui
 html_form = """
 <!DOCTYPE html>
 <html>
@@ -81,7 +81,7 @@ def send_request_to_arduino(command, intensity=None, delay=None, data=None):
     except requests.ConnectionError:
         #handling connection errors and returning status
         return 500, b"Failed to connect to Arduino Nano"
-# handling HTTP requests
+#handling HTTP requests
 class MyServer(BaseHTTPRequestHandler):
     def do_GET(self):
         if self.path.startswith("/led_control"):
