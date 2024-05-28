@@ -5,16 +5,17 @@
 #include <Wire.h>
 
 BH1750 lightMeter;
-
+//sensitive wifi data
 char ssid[] = SECRET_SSID;
-char pass[] = SECRET_PASSWORD; 
+char pass[] = SECRET_PASSWORD;
+//defining sensors to arduino pin
 const int ledPin = 3; 
 const int pirPin = 7;
 const int serverPort = 80;
-
-int delayTime = 1000;  //default delay time (1 second)
+//setting default delaytime and delay active variables
+int delayTime = 1000;
 bool delayActive = false;
-
+//initializing wifi connection
 WiFiServer server(serverPort);
 WiFiClient client;
 
@@ -65,7 +66,7 @@ void loop() {
         if (idx != -1) {
           String command = request.substring(idx + 8, request.indexOf(" ", idx + 8));
           Serial.println("Received command: " + command);
-
+          //different command for on and off
           if (command == "on") {
             analogWrite(ledPin, 255); //set intensity to 255
             client.println("LED turned on");
@@ -78,6 +79,7 @@ void loop() {
         } else {
           idx = request.indexOf("intensity=");
           if (idx != -1) {
+            //setting intensity of LED
             int intensity = request.substring(idx + 10).toInt();
             analogWrite(ledPin, intensity); //set LED intensity
             Serial.println("LED intensity set to " + String(intensity));
@@ -85,11 +87,13 @@ void loop() {
           } else {
             idx = request.indexOf("delay=");
             if (idx != -1) {
+              //setting delay time to user input in gui
               delayTime = request.substring(idx + 6).toInt();
               Serial.println("Delay set to " + String(delayTime) + "ms (" + String(delayTime/1000) + "s)");
             } else {
               idx = request.indexOf("data=light_data");
               if (idx != -1) {
+                //print into serial monitor about light data
                 float lux = lightMeter.readLightLevel();
                 Serial.println("Light: " + String(lux) + " lx");
                 float power = analogRead(ledPin) / 255.0 * 5.0; //voltage converted depending on chosen intensity
