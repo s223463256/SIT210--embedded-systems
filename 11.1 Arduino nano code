@@ -1,0 +1,126 @@
+#include "arduino_secrets.h"
+#include <SPI.h>
+#include <WiFiNINA.h>
+#include <BH1750.h>
+#include <Wire.h>
+
+BH1750 lightMeter;
+
+char ssid[] = SECRET_SSID;
+char pass[] = SECRET_PASSWORD; 
+const int ledPin = 3; 
+const int pirPin = 7;
+const int serverPort = 80;
+
+int delayTime = 1000;  // Default delay time (1 second)
+bool delayActive = false;
+
+WiFiServer server(serverPort);
+WiFiClient client;
+
+void setup() {
+  Serial.begin(9600);
+  Wire.begin();
+
+  // Initialize pin as output
+  pinMode(ledPin, OUTPUT);
+  digitalWrite(ledPin, LOW);
+
+  // Connect to WiFi network
+  Serial.print("Connecting to WiFi...");
+  WiFi.begin(ssid, pass);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+  Serial.println("WiFi connected");
+
+  // Start the server
+  server.begin();
+  Serial.println("Server started");
+  Serial.print("Arduino IP: ");
+  Serial.println(WiFi.localIP()); //display arduino ip for raspberry pi
+  
+
+  // Initialize light sensor
+  lightMeter.begin();
+}
+
+void loop() {
+  // Read motion sensor state
+  bool motionDetected = digitalRead(pirPin) == HIGH;
+
+  // Check if a client has connected
+  client = server.available();
+  if (client) {
+    // Wait for data from client
+    while (client.connected()) {
+      if (client.available()) {
+        // Read the HTTP request
+        String request = client.readStringUntil('\r');
+        client.readStringUntil('\n');
+
+        // get command from http request
+        int idx = request.indexOf("command=");
+        if (idx != -1) {
+          String command = request.substring(idx + 8, request.indexOf(" ", idx + 8));
+          Serial.println("Received command: " + command);
+
+          // Act based on the command received
+          if (command == "on") {
+            analogWrite(ledPin, 255); // Set intensity to 255
+            client.println("LED turned on");
+          } else if (command == "off") {
+            analogWrite(ledPin, 0); // Set intensity to 0
+            client.println("LED turned off");
+          } else {
+            client.println("Invalid command");
+          }
+        } else {
+          idx = request.indexOf("intensity=");
+          if (idx != -1) {
+            int intensity = request.substring(idx + 10).toInt();
+            analogWrite(ledPin, intensity); // Set LED intensity
+            Serial.println("LED intensity set to " + String(intensity));
+            delayActive = true; // set delay to be true after intensity is set
+          } else {
+            idx = request.indexOf("delay=");
+            if (idx != -1) {
+              delayTime = request.substring(idx + 6).toInt();
+              Serial.println("Delay set to " + String(delayTime) + "ms (" + String(delayTime/1000) + "s)");
+            } else {
+              idx = request.indexOf("data=light_data");
+              if (idx != -1) {
+                float lux = lightMeter.readLightLevel();
+                Serial.println("Light: " + String(lux) + " lx");
+                float power = analogRead(ledPin) / 255.0 * 5.0; //voltage converted depending on chosen intensity
+                float wastedEnergy = power * delayTime / 1000.0; //finding wasted energy
+                Serial.print("At the current intensity, your LED will be wasting ");
+                Serial.print(wastedEnergy);
+                Serial.println(" W/second");
+                if (lux < 500) {
+                  Serial.println("Your LED should be greater than " + String(lux) + " to be effective");
+                } else {
+                  Serial.println("The room is bright enough, you should turn the LED off");
+                }
+              } else {
+                client.println("Invalid request");
+              }
+            }
+          }
+        }
+      }
+    }
+    
+    // Check if delay should be activated
+    if (delayActive && !motionDetected) { //if delay is true and no motion is detected delay and turn led off.
+      delay(delayTime);
+      analogWrite(ledPin, 0);
+      delayActive = false;
+    }
+
+    // Close the connection
+    client.stop();
+  }
+}
+
