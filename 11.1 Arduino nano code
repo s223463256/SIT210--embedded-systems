@@ -12,7 +12,7 @@ const int ledPin = 3;
 const int pirPin = 7;
 const int serverPort = 80;
 
-int delayTime = 1000;  // Default delay time (1 second)
+int delayTime = 1000;  //default delay time (1 second)
 bool delayActive = false;
 
 WiFiServer server(serverPort);
@@ -22,11 +22,11 @@ void setup() {
   Serial.begin(9600);
   Wire.begin();
 
-  // Initialize pin as output
+  //initialize pin as output
   pinMode(ledPin, OUTPUT);
   digitalWrite(ledPin, LOW);
 
-  // Connect to WiFi network
+  //connect to WiFi network
   Serial.print("Connecting to WiFi...");
   WiFi.begin(ssid, pass);
   while (WiFi.status() != WL_CONNECTED) {
@@ -35,40 +35,39 @@ void setup() {
   }
   Serial.println("WiFi connected");
 
-  // Start the server
+  //start the server
   server.begin();
   Serial.println("Server started");
   Serial.print("Arduino IP: ");
   Serial.println(WiFi.localIP()); //display arduino ip for raspberry pi
   
 
-  // Initialize light sensor
+  //initialize light sensor
   lightMeter.begin();
 }
 
 void loop() {
-  // Read motion sensor state
+  //read motion sensor state
   bool motionDetected = digitalRead(pirPin) == HIGH;
 
-  // Check if a client has connected
+  //check if a client has connected
   client = server.available();
   if (client) {
-    // Wait for data from client
+    //wait for data from client
     while (client.connected()) {
       if (client.available()) {
-        // Read the HTTP request
+        //read the HTTP request
         String request = client.readStringUntil('\r');
         client.readStringUntil('\n');
 
-        // get command from http request
+        //get command from http request
         int idx = request.indexOf("command=");
         if (idx != -1) {
           String command = request.substring(idx + 8, request.indexOf(" ", idx + 8));
           Serial.println("Received command: " + command);
 
-          // Act based on the command received
           if (command == "on") {
-            analogWrite(ledPin, 255); // Set intensity to 255
+            analogWrite(ledPin, 255); //set intensity to 255
             client.println("LED turned on");
           } else if (command == "off") {
             analogWrite(ledPin, 0); // Set intensity to 0
@@ -80,9 +79,9 @@ void loop() {
           idx = request.indexOf("intensity=");
           if (idx != -1) {
             int intensity = request.substring(idx + 10).toInt();
-            analogWrite(ledPin, intensity); // Set LED intensity
+            analogWrite(ledPin, intensity); //set LED intensity
             Serial.println("LED intensity set to " + String(intensity));
-            delayActive = true; // set delay to be true after intensity is set
+            delayActive = true; //set delay to be true after intensity is set
           } else {
             idx = request.indexOf("delay=");
             if (idx != -1) {
