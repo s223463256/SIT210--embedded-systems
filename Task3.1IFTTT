@@ -12,7 +12,7 @@ WiFiClient client;
 char   HOST_NAME[] = "maker.ifttt.com";
 String PATH_NAME   = "/trigger/sketch_received/with/key/fPKn9QR5lsUafaoWyGJdakvLqygu-QyYUH8QnjCJz1b"; // change your EVENT-NAME and YOUR-KEY
 String queryString = "?value1=57&value2=25";
-
+//initializing wifi connection
 void setup() {
   // initialize WiFi connection
   WiFi.begin(ssid, pass);
@@ -35,13 +35,15 @@ void setup() {
 }
 
 void loop() {
+  //defining sensor to read light sensor
   float lux = lightMeter.readLightLevel();
+  //defining values
   static int counter = 1;
   static int test = 1;
   Serial.print("Light: ");
   Serial.print(lux);
   Serial.println(" lx");
-
+//check to see if light value is below 10 and counter 1
   if (lux <= 10 && counter == 1) {
     Serial.println("Low Light Level ");
     client.println();
@@ -49,7 +51,9 @@ void loop() {
     client.println("Host: " + String(HOST_NAME));
     Serial.println("Insufficent sunlight email sent");
     client.println();
+//after sending email changes counter to 2 so that same light wont sent another insufficent sunlight email
     counter = 2;
+//check to see if light value is above 10 and counter is 2
   } else if (lux > 10 && counter == 2) {
     Serial.println("High Light Level ");
     client.println();
@@ -57,8 +61,10 @@ void loop() {
     client.println("Host: " + String(HOST_NAME));
     Serial.println("Sufficent sunlight email sent");
     client.println();
+//after sending email changes counter to 1 so that same light wont sent another sufficent sunlight email
     counter = 1;
   }
+//if light level is same print to monitor that its same light level
   else{
     Serial.println("Still same light level");
   }
